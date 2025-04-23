@@ -1,0 +1,329 @@
+:root {
+  --primary-color: #4361ee;
+  --secondary-color: #3f37c9;
+  --success-color: #4cc9f0;
+  --light-bg: #f8f9fa;
+  --dark-bg: #212529;
+  --modal-backdrop-bg: rgba(0, 0, 0, 0.5);
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--light-bg);
+}
+/* ФИКС за треперене на модали - трябва да са в началото на CSS файла */
+.modal,
+.modal * {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+.modal {
+  z-index: 1050;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: 0;
+  display: none;
+  opacity: 0;
+}
+
+.modal.show {
+  display: block;
+  opacity: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.15s linear;
+}
+
+.modal-backdrop.show {
+  opacity: 1;
+}
+
+.modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 0.5rem;
+  pointer-events: none;
+  max-width: 500px;
+  margin: 1.75rem auto;
+}
+
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: auto;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.3rem;
+  outline: 0;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Допълнителни фикси за клиентските модали */
+#addCustomerModal,
+#customerPricesModal,
+#addCustomerModal *,
+#customerPricesModal * {
+  transition: none !important;
+  animation: none !important;
+  transform: none !important;
+  will-change: auto !important;
+}
+
+/* Специфични стилове за по-големите модали */
+.modal-lg .modal-content {
+  min-height: 80vh; /* Предотвратява резки промени във височината */
+  overflow-y: auto; /* Добавя скролбар при необходимост */
+}
+
+/* Фикс за backdrop */
+.modal-backdrop {
+  opacity: 0.5 !important; /* Задава фиксирана непрозрачност */
+  transition: none !important;
+}
+
+/* Общи стилове за карти */
+.card {
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.card:hover:not(.modal .card) {
+  transform: translateY(-5px);
+}
+
+.customer-card {
+  transition: all 0.3s ease;
+  border-left: 4px solid var(--primary-color);
+}
+
+.customer-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Стилове за таблици */
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  font-size: 0.9rem;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+}
+
+.sortable:hover {
+  background-color: #f1f1f1;
+  cursor: pointer;
+}
+
+/* Стилове за цени */
+.price-cell {
+  font-weight: 500;
+}
+
+.base-price {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.custom-price {
+  font-weight: 700;
+  color: #2a9d8f;
+  background-color: rgba(42, 157, 143, 0.1);
+}
+
+.price-change {
+  font-size: 0.8em;
+  color: #6c757d;
+}
+
+.price-increase {
+  color: #e63946;
+}
+
+.price-decrease {
+  color: #2a9d8f;
+}
+
+.price-changed {
+  animation: highlight 1.5s;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: rgba(255, 235, 59, 0.5);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Стилове за бутони и действия */
+.quick-action-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  margin: 0.1rem;
+}
+
+.customer-actions .btn {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.customer-card:hover .customer-actions .btn {
+  opacity: 1;
+}
+
+/* Стилове за навигация */
+.nav-tabs .nav-link.active {
+  font-weight: bold;
+  border-bottom: 3px solid var(--primary-color);
+}
+
+/* Стилове за известия */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+}
+
+/* Стилове за клиенти */
+.product-badge {
+  font-size: 0.75rem;
+  background-color: rgba(67, 97, 238, 0.1);
+  color: var(--primary-color);
+}
+
+.customer-header {
+  background-color: rgba(67, 97, 238, 0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-card {
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.stat-card.customers {
+  border-left-color: #4361ee;
+}
+
+.stat-card.products {
+  border-left-color: #4cc9f0;
+}
+
+.stat-card.discounts {
+  border-left-color: #2a9d8f;
+}
+
+/* Тъмна тема за модали */
+body.dark-theme .modal-content {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+body.dark-theme .modal-header,
+body.dark-theme .modal-footer {
+  border-color: #444;
+}
+
+body.dark-theme .modal-title {
+  color: #e0e0e0;
+}
+
+body.dark-theme .btn-close {
+  filter: invert(1);
+}
+
+/* Респонсивни стилове за модали */
+@media (min-width: 576px) {
+  .modal-dialog {
+    max-width: 500px;
+    margin: 1.75rem auto;
+  }
+
+  .modal-sm {
+    max-width: 300px;
+  }
+}
+
+@media (min-width: 992px) {
+  .modal-lg,
+  .modal-xl {
+    max-width: 800px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .modal-xl {
+    max-width: 1140px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    height: 100%;
+  }
+
+  .modal-content {
+    height: 100%;
+    border-radius: 0;
+  }
+}
+
+/* Респонсивни стилове */
+@media (max-width: 768px) {
+  .table-responsive-sm {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .d-sm-flex {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .search-box {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Корекции за body при отворен модал */
+body.modal-open {
+  overflow: hidden;
+  padding-right: 0 !important;
+}

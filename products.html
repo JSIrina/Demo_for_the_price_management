@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Управление на цени - Оптимизиран</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <style>
+      :root {
+        --primary-color: #4361ee;
+        --secondary-color: #3f37c9;
+        --success-color: #4cc9f0;
+        --light-bg: #f8f9fa;
+        --dark-bg: #212529;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--light-bg);
+      }
+
+      .card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+      }
+
+      .table-responsive {
+        overflow-x: auto;
+      }
+
+      table {
+        font-size: 0.9rem;
+      }
+
+      th {
+        position: sticky;
+        top: 0;
+        background-color: white;
+        z-index: 10;
+      }
+
+      .sortable:hover {
+        background-color: #f1f1f1;
+        cursor: pointer;
+      }
+
+      .price-cell {
+        font-weight: 500;
+      }
+
+      .base-price {
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+
+      .custom-price {
+        font-weight: 700;
+        color: #2a9d8f;
+        background-color: rgba(42, 157, 143, 0.1);
+      }
+
+      .price-change {
+        font-size: 0.8em;
+        color: #6c757d;
+      }
+
+      .price-increase {
+        color: #e63946;
+      }
+
+      .price-decrease {
+        color: #2a9d8f;
+      }
+
+      .price-changed {
+        animation: highlight 1.5s;
+      }
+
+      @keyframes highlight {
+        0% {
+          background-color: rgba(255, 235, 59, 0.5);
+        }
+        100% {
+          background-color: transparent;
+        }
+      }
+
+      .quick-action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+        margin: 0.1rem;
+      }
+
+      .nav-tabs .nav-link.active {
+        font-weight: bold;
+        border-bottom: 3px solid var(--primary-color);
+      }
+
+      .toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1100;
+      }
+
+      /* Dark theme */
+      body.dark-theme {
+        background-color: #121212;
+        color: #e0e0e0;
+      }
+
+      body.dark-theme .card {
+        background-color: #1e1e1e;
+        color: #e0e0e0;
+      }
+
+      body.dark-theme .table {
+        color: #e0e0e0;
+      }
+
+      body.dark-theme .table th,
+      body.dark-theme .table td {
+        border-color: #444;
+      }
+
+      body.dark-theme .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      body.dark-theme .form-control,
+      body.dark-theme .form-select {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+        border-color: #444;
+      }
+
+      @media (max-width: 768px) {
+        .table-responsive-sm {
+          display: block;
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .d-sm-flex {
+          display: flex !important;
+          flex-direction: column;
+        }
+
+        .search-box {
+          margin-bottom: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid py-4">
+      <!-- Header -->
+      <header class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">
+          <i class="bi bi-graph-up"></i> Управление на цени
+        </h1>
+        <div>
+          <button class="btn btn-sm btn-outline-secondary">
+            <a class="nav-link active" target="_blank" href="customers.html"
+              >Демо продукти</a
+            >
+          </button>
+          <button class="btn btn-sm btn-outline-secondary">
+            <a class="nav-link active" target="_blank" href="index.html"
+              >Демо начална</a
+            >
+          <button id="themeToggle" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-moon-fill"></i> Тема
+          </button>
+          <button id="helpBtn" class="btn btn-sm btn-outline-primary ms-2">
+            <i class="bi bi-question-circle"></i> Помощ
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <div class="card">
+        <div class="card-body">
+          <!-- Navigation Tabs -->
+          <ul class="nav nav-tabs mb-4" id="dashboardTabs">
+            <li class="nav-item">
+              <a
+                class="nav-link active"
+                id="products-tab"
+                data-bs-toggle="tab"
+                href="#products"
+              >
+                <i class="bi bi-box-seam"></i> Продукти
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                id="customers-tab"
+                data-bs-toggle="tab"
+                href="#customers"
+              >
+                <i class="bi bi-people"></i> Купувачи
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                id="reports-tab"
+                data-bs-toggle="tab"
+                href="#reports"
+              >
+                <i class="bi bi-bar-chart"></i> Отчети
+              </a>
+            </li>
+          </ul>
+
+          <!-- Tab Content -->
+          <div class="tab-content">
+            <!-- Products Tab -->
+            <div class="tab-pane fade show active" id="products">
+              <div
+                class="d-sm-flex justify-content-between align-items-center mb-3"
+              >
+                <div class="search-box mb-3 mb-sm-0">
+                  <div class="input-group">
+                    <span class="input-group-text"
+                      ><i class="bi bi-search"></i
+                    ></span>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="productSearch"
+                      placeholder="Търсене на продукт..."
+                    />
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      id="clearSearch"
+                    >
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <button class="btn btn-sm btn-outline-primary" id="exportBtn">
+                    <i class="bi bi-download"></i> Експорт
+                  </button>
+                  <button
+                    class="btn btn-sm btn-primary ms-2"
+                    id="addProductBtn"
+                  >
+                    <i class="bi bi-plus"></i> Добави продукт
+                  </button>
+                </div>
+              </div>
+
+              <div class="table-responsive-sm">
+                <table class="table table-striped table-hover">
+                  <thead>
+                    <tr>
+                      <th class="sortable" data-column="name">
+                        Продукт <i class="bi bi-arrow-down-up"></i>
+                      </th>
+                      <th class="sortable" data-column="basePrice">
+                        Базова цена <i class="bi bi-arrow-down-up"></i>
+                      </th>
+                      <th>Стандартни надценки</th>
+                      <th>Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody id="productsTable">
+                    <!-- Данните ще се попълнят динамично -->
+                  </tbody>
+                </table>
+              </div>
+
+              <nav aria-label="Page navigation" class="mt-3">
+                <ul class="pagination justify-content-center">
+                  <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Предишна</a>
+                  </li>
+                  <li class="page-item active">
+                    <a class="page-link" href="#">1</a>
+                  </li>
+                  <li class="page-item"><a class="page-link" href="#">2</a></li>
+                  <li class="page-item"><a class="page-link" href="#">3</a></li>
+                  <li class="page-item">
+                    <a class="page-link" href="#">Следваща</a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+
+            <!-- Customers Tab -->
+            <div class="tab-pane fade" id="customers">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Тук можете да управлявате
+                списъка с купувачи и техните персонализирани цени.
+              </div>
+              <p>Съдържанието ще бъде добавено скоро...</p>
+            </div>
+
+            <!-- Reports Tab -->
+            <div class="tab-pane fade" id="reports">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h5 class="card-title mb-0">
+                        Средни надценки по купувачи
+                      </h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-placeholder" style="height: 300px">
+                        <!-- Графика ще се добави тук -->
+                        <p class="text-muted text-center py-5">
+                          Графиката ще се покаже тук
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h5 class="card-title mb-0">
+                        Най-често променяни продукти
+                      </h5>
+                    </div>
+                    <div class="card-body">
+                      <div class="chart-placeholder" style="height: 300px">
+                        <!-- Графика ще се добави тук -->
+                        <p class="text-muted text-center py-5">
+                          Графиката ще се покаже тук
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container">
+      <div
+        id="successToast"
+        class="toast align-items-center text-white bg-success"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span id="toastMessage">Действието е изпълнено успешно!</span>
+          </div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Price Management Modal -->
+    <div
+      class="modal fade"
+      id="priceModal"
+      tabindex="-1"
+      aria-labelledby="priceModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="priceModalLabel">
+              Управление на цени за купувачи
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Избери купувач:</label>
+                  <select class="form-select" id="customerSelect">
+                    <!-- Опциите ще се попълнят динамично -->
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Персонализирана цена:</label>
+                  <div class="input-group">
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="customPrice"
+                      step="0.01"
+                    />
+                    <span class="input-group-text">лв.</span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label"
+                    >Или използвай стандартна надценка:</label
+                  >
+                  <select class="form-select" id="standardMarkup">
+                    <option value="0">Без надценка (базова цена)</option>
+                    <option value="5">5% надценка</option>
+                    <option value="10">10% надценка</option>
+                    <option value="15">15% надценка</option>
+                    <option value="20">20% надценка</option>
+                    <option value="25">25% надценка</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card">
+                  <div class="card-header bg-light">
+                    <h6 class="mb-0">Информация за продукта</h6>
+                  </div>
+                  <div class="card-body">
+                    <h5 id="modalProductName">-</h5>
+                    <table class="table table-sm table-borderless">
+                      <tr>
+                        <th>Базова цена:</th>
+                        <td id="modalBasePrice">-</td>
+                      </tr>
+                      <tr>
+                        <th>Текуща цена:</th>
+                        <td id="modalCurrentPrice">-</td>
+                      </tr>
+                      <tr>
+                        <th>Разлика:</th>
+                        <td id="modalPriceDiff">-</td>
+                      </tr>
+                    </table>
+                    <div class="alert alert-warning mt-2">
+                      <i class="bi bi-info-circle"></i> Персонализираните цени
+                      ще заместят стандартните надценки за избрания купувач.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive mt-3">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Купувач</th>
+                    <th>Зададена цена</th>
+                    <th>Разлика</th>
+                    <th>Действия</th>
+                  </tr>
+                </thead>
+                <tbody id="customerPricesTable">
+                  <!-- Данните ще се попълнят динамично -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              <i class="bi bi-x-circle"></i> Отказ
+            </button>
+            <button type="button" class="btn btn-primary" id="savePriceBtn">
+              <i class="bi bi-save"></i> Запази промените
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div
+      class="modal fade"
+      id="addProductModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Добавяне на нов продукт</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="addProductForm">
+              <div class="mb-3">
+                <label for="productName" class="form-label"
+                  >Име на продукта</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="productName"
+                  required
+                />
+              </div>
+              <div class="mb-3">
+                <label for="productBasePrice" class="form-label"
+                  >Базова цена</label
+                >
+                <div class="input-group">
+                  <input
+                    type="number"
+                    step="0.01"
+                    class="form-control"
+                    id="productBasePrice"
+                    required
+                  />
+                  <span class="input-group-text">лв.</span>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="productDescription" class="form-label"
+                  >Описание</label
+                >
+                <textarea
+                  class="form-control"
+                  id="productDescription"
+                  rows="3"
+                ></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Отказ
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              id="confirmAddProduct"
+            >
+              Добави
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Примерни данни (в реална ситуация ще се зареждат от базата данни)
+      let products = [
+        {
+          id: 1,
+          name: "Лаптоп HP Pavilion",
+          basePrice: 1599.99,
+          description: '15.6", Intel i7, 16GB RAM',
+        },
+        {
+          id: 2,
+          name: "Смартфон Samsung Galaxy S23",
+          basePrice: 1299.0,
+          description: '6.1", 128GB, 5G',
+        },
+        {
+          id: 3,
+          name: "Таблет iPad Air",
+          basePrice: 899.0,
+          description: '10.9", M1 чип, 64GB',
+        },
+        {
+          id: 4,
+          name: 'Монитор Dell 27"',
+          basePrice: 349.99,
+          description: "QHD, 144Hz, IPS",
+        },
+        {
+          id: 5,
+          name: "Безжични слушалки Sony WH-1000XM5",
+          basePrice: 449.0,
+          description: "Шумозаглушаващи",
+        },
+      ];
+
+      let customers = [
+        { id: 1, name: "ТехноМаркет ООД" },
+        { id: 2, name: "Електроникс ЕООД" },
+        { id: 3, name: "Голям Дистрибутор АД" },
+        { id: 4, name: "Онлайн Магазин БГ" },
+      ];
+
+      let customerPrices = {
+        // Формат: productId: { customerId: price }
+        1: { 1: 1499.99, 3: 1679.99 },
+        2: { 2: 1199.0, 4: 1349.0 },
+        3: { 1: 849.0 },
+      };
+
+      // Текущо състояние
+      let currentSort = { column: "name", direction: "asc" };
+      let currentProductId = null;
+      let currentCustomerId = null;
+
+      // Инициализация на приложението
+      document.addEventListener("DOMContentLoaded", function () {
+        populateProductsTable();
+        populateCustomerDropdown();
+        initEventListeners();
+        loadThemePreference();
+      });
+
+      // Функция за изчисляване на цена с надценка
+      function calculatePrice(basePrice, markup) {
+        return basePrice * (1 + markup / 100);
+      }
+
+      // Функция за форматиране на парична сума
+      function formatPrice(price) {
+        return price.toFixed(2) + " лв.";
+      }
+
+      // Функция за изчисляване на процентна разлика
+      function calculatePriceDiff(basePrice, currentPrice) {
+        const diff = ((currentPrice - basePrice) / basePrice) * 100;
+        return diff.toFixed(1) + "%";
+      }
+
+      // Попълване на таблицата с продукти
+      function populateProductsTable(filter = "") {
+        const tableBody = document.getElementById("productsTable");
+        tableBody.innerHTML = "";
+
+        // Филтриране
+        let filteredProducts = products.filter(
+          (product) =>
+            product.name.toLowerCase().includes(filter.toLowerCase()) ||
+            product.description.toLowerCase().includes(filter.toLowerCase())
+        );
+
+        // Сортиране
+        filteredProducts.sort((a, b) => {
+          let aValue, bValue;
+
+          if (currentSort.column === "name") {
+            aValue = a.name;
+            bValue = b.name;
+          } else {
+            aValue = a.basePrice;
+            bValue = b.basePrice;
+          }
+
+          return currentSort.direction === "asc"
+            ? aValue > bValue
+              ? 1
+              : -1
+            : aValue < bValue
+            ? 1
+            : -1;
+        });
+
+        // Попълване на редовете
+        filteredProducts.forEach((product) => {
+          const row = document.createElement("tr");
+          row.setAttribute("data-product-id", product.id);
+
+          // Генериране на HTML за стандартните надценки
+          let markupPricesHtml = "";
+          for (let markup of [5, 10, 15, 20, 25]) {
+            const price = calculatePrice(product.basePrice, markup);
+            markupPricesHtml += `
+                        <div class="d-inline-block me-2">
+                            <span class="d-block small text-muted">+${markup}%</span>
+                            <span class="price-cell">${formatPrice(
+                              price
+                            )}</span>
+                        </div>
+                    `;
+          }
+
+          // Проверка за персонализирани цени за този продукт
+          const hasCustomPrices =
+            customerPrices[product.id] &&
+            Object.keys(customerPrices[product.id]).length > 0;
+          const customPriceBadge = hasCustomPrices
+            ? '<span class="badge bg-success ms-2"><i class="bi bi-people-fill"></i> ' +
+              Object.keys(customerPrices[product.id]).length +
+              "</span>"
+            : "";
+
+          row.innerHTML = `
+                    <td>
+                        <div class="fw-semibold">${product.name}</div>
+                        <div class="small text-muted">${
+                          product.description
+                        }</div>
+                    </td>
+                    <td class="base-price">${formatPrice(
+                      product.basePrice
+                    )}</td>
+                    <td>${markupPricesHtml}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary manage-prices" data-product-id="${
+                          product.id
+                        }" 
+                                title="Управление на цени за купувачи">
+                            <i class="bi bi-people-fill"></i> Цени${customPriceBadge}
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary ms-1 quick-action" 
+                                data-product-id="${
+                                  product.id
+                                }" data-markup="5" title="Бърза надценка 5%">
+                            +5%
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary ms-1 quick-action" 
+                                data-product-id="${
+                                  product.id
+                                }" data-markup="10" title="Бърза надценка 10%">
+                            +10%
+                        </button>
+                    </td>
+                `;
+          tableBody.appendChild(row);
+        });
+
+        // Добавяне на event listeners за бутоните
+        document.querySelectorAll(".manage-prices").forEach((button) => {
+          button.addEventListener("click", function () {
+            const productId = parseInt(this.getAttribute("data-product-id"));
+            openPriceModal(productId);
+          });
+        });
+
+        document.querySelectorAll(".quick-action").forEach((button) => {
+          button.addEventListener("click", function () {
+            const productId = parseInt(this.getAttribute("data-product-id"));
+            const markup = parseInt(this.getAttribute("data-markup"));
+            applyQuickMarkup(productId, markup);
+          });
+        });
+
+        // Ако няма продукти след филтриране
+        if (filteredProducts.length === 0) {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+                    <td colspan="4" class="text-center py-4 text-muted">
+                        <i class="bi bi-exclamation-circle"></i> Няма намерени продукти
+                    </td>
+                `;
+          tableBody.appendChild(row);
+        }
+      }
+
+      // Попълване на dropdown с купувачи
+      function populateCustomerDropdown() {
+        const select = document.getElementById("customerSelect");
+        select.innerHTML = "";
+
+        customers.forEach((customer) => {
+          const option = document.createElement("option");
+          option.value = customer.id;
+          option.textContent = customer.name;
+          select.appendChild(option);
+        });
+      }
+
+      // Отваряне на модалния прозорец за управление на цени
+      function openPriceModal(productId) {
+        currentProductId = productId;
+        const product = products.find((p) => p.id === productId);
+
+        if (!product) return;
+
+        // Показване на информация за продукта в модалния прозорец
+        document.getElementById("modalProductName").textContent = product.name;
+        document.getElementById("modalBasePrice").textContent = formatPrice(
+          product.basePrice
+        );
+
+        // Нулиране на полетата
+        document.getElementById("customPrice").value = "";
+        document.getElementById("standardMarkup").value = "0";
+        document.getElementById("customerSelect").value = customers[0].id;
+
+        // Попълване на таблицата с цени за купувачи
+        populateCustomerPricesTable(productId);
+
+        // Показване на модалния прозорец
+        const modal = new bootstrap.Modal(
+          document.getElementById("priceModal")
+        );
+        modal.show();
+
+        // Фокусиране на първото поле
+        setTimeout(
+          () => document.getElementById("customerSelect").focus(),
+          500
+        );
+      }
+
+      // Попълване на таблицата с цени за купувачи
+      function populateCustomerPricesTable(productId) {
+        const tableBody = document.getElementById("customerPricesTable");
+        tableBody.innerHTML = "";
+
+        const product = products.find((p) => p.id === productId);
+        if (!product) return;
+
+        customers.forEach((customer) => {
+          const row = document.createElement("tr");
+          const customPrice = customerPrices[productId]?.[customer.id];
+          const price = customPrice || product.basePrice;
+          const diff = calculatePriceDiff(product.basePrice, price);
+
+          const diffClass = customPrice
+            ? customPrice > product.basePrice
+              ? "price-increase"
+              : "price-decrease"
+            : "";
+
+          row.innerHTML = `
+                    <td>${customer.name}</td>
+                    <td class="fw-semibold ${
+                      customPrice ? "custom-price" : ""
+                    }">
+                        ${formatPrice(price)}
+                        ${
+                          customPrice
+                            ? `<span class="price-change ${diffClass}">(${diff})</span>`
+                            : ""
+                        }
+                    </td>
+                    <td class="${diffClass}">${diff}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary edit-price" 
+                                data-customer-id="${customer.id}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
+                `;
+          tableBody.appendChild(row);
+        });
+
+        // Добавяне на event listeners за бутоните за редактиране
+        document.querySelectorAll(".edit-price").forEach((button) => {
+          button.addEventListener("click", function () {
+            const customerId = parseInt(this.getAttribute("data-customer-id"));
+            selectCustomerInModal(customerId);
+          });
+        });
+      }
+
+      // Избор на купувач в модалния прозорец
+      function selectCustomerInModal(customerId) {
+        document.getElementById("customerSelect").value = customerId;
+        currentCustomerId = customerId;
+
+        const product = products.find((p) => p.id === currentProductId);
+        if (!product) return;
+
+        // Проверка за съществуваща персонализирана цена
+        const customPrice = customerPrices[currentProductId]?.[customerId];
+
+        if (customPrice) {
+          document.getElementById("customPrice").value = customPrice.toFixed(2);
+
+          // Проверка дали цената съвпада със стандартна надценка
+          let isStandardMarkup = false;
+          for (let markup of [0, 5, 10, 15, 20, 25]) {
+            const calculatedPrice = calculatePrice(product.basePrice, markup);
+            if (Math.abs(calculatedPrice - customPrice) < 0.01) {
+              document.getElementById("standardMarkup").value = markup;
+              isStandardMarkup = true;
+              break;
+            }
+          }
+
+          if (!isStandardMarkup) {
+            document.getElementById("standardMarkup").value = "0";
+          }
+        } else {
+          document.getElementById("customPrice").value = "";
+          document.getElementById("standardMarkup").value = "0";
+        }
+
+        // Актуализиране на информацията в дясната колона
+        updatePriceInfoInModal();
+      }
+
+      // Актуализиране на информацията за цената в модалния прозорец
+      function updatePriceInfoInModal() {
+        const product = products.find((p) => p.id === currentProductId);
+        if (!product) return;
+
+        const customPriceInput = document.getElementById("customPrice");
+        const markupSelect = document.getElementById("standardMarkup");
+
+        let currentPrice;
+        if (customPriceInput.value) {
+          currentPrice = parseFloat(customPriceInput.value);
+        } else {
+          const markup = parseFloat(markupSelect.value);
+          currentPrice = calculatePrice(product.basePrice, markup);
+        }
+
+        document.getElementById("modalCurrentPrice").textContent =
+          formatPrice(currentPrice);
+
+        const diff = calculatePriceDiff(product.basePrice, currentPrice);
+        const diffElement = document.getElementById("modalPriceDiff");
+        diffElement.textContent = diff;
+
+        if (currentPrice > product.basePrice) {
+          diffElement.className = "price-increase";
+        } else if (currentPrice < product.basePrice) {
+          diffElement.className = "price-decrease";
+        } else {
+          diffElement.className = "";
+        }
+      }
+
+      // Прилагане на бърза надценка
+      function applyQuickMarkup(productId, markup) {
+        const product = products.find((p) => p.id === productId);
+        if (!product) return;
+
+        const newPrice = calculatePrice(product.basePrice, markup);
+
+        // Показване на модален прозорец за потвърждение
+        if (
+          confirm(
+            `Прилагане на ${markup}% надценка върху всички купувачи за продукт "${
+              product.name
+            }"?\nНова цена: ${formatPrice(newPrice)}`
+          )
+        ) {
+          // В реална ситуация тук ще изпратите заявка към сървъра
+          if (!customerPrices[productId]) {
+            customerPrices[productId] = {};
+          }
+
+          customers.forEach((customer) => {
+            customerPrices[productId][customer.id] = newPrice;
+          });
+
+          showToast(
+            `Надценка от ${markup}% е приложена успешно за всички купувачи`
+          );
+          populateProductsTable();
+
+          // Ако модалният прозорец е отворен за този продукт, актуализираме го
+          if (currentProductId === productId) {
+            populateCustomerPricesTable(productId);
+          }
+        }
+      }
+
+      // Запазване на цената за купувача
+      function saveCustomerPrice() {
+        if (!currentProductId) return;
+
+        const customerId = parseInt(
+          document.getElementById("customerSelect").value
+        );
+        const customPriceInput = document.getElementById("customPrice");
+        const markupSelect = document.getElementById("standardMarkup");
+
+        const product = products.find((p) => p.id === currentProductId);
+        if (!product) return;
+
+        let price;
+        if (customPriceInput.value) {
+          price = parseFloat(customPriceInput.value);
+        } else {
+          const markup = parseFloat(markupSelect.value);
+          price = calculatePrice(product.basePrice, markup);
+        }
+
+        // Запазване на цената
+        if (!customerPrices[currentProductId]) {
+          customerPrices[currentProductId] = {};
+        }
+
+        if (Math.abs(price - product.basePrice) < 0.01) {
+          // Ако цената е същата като базовата, премахваме записа
+          delete customerPrices[currentProductId][customerId];
+
+          // Ако няма други цени за този продукт, премахваме целия запис
+          if (Object.keys(customerPrices[currentProductId]).length === 0) {
+            delete customerPrices[currentProductId];
+          }
+        } else {
+          customerPrices[currentProductId][customerId] = price;
+        }
+
+        showToast(
+          `Цената за ${
+            customers.find((c) => c.id === customerId).name
+          } е запазена успешно!`
+        );
+
+        // Актуализиране на таблиците
+        populateProductsTable();
+        populateCustomerPricesTable(currentProductId);
+
+        // Затваряне на модалния прозорец ако потребителят желае
+        if (confirm("Цената е запазена. Желаете ли да затворите прозореца?")) {
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById("priceModal")
+          );
+          modal.hide();
+        }
+      }
+
+      // Показване на toast съобщение
+      function showToast(message) {
+        const toastEl = document.getElementById("successToast");
+        const toastMessage = document.getElementById("toastMessage");
+
+        toastMessage.textContent = message;
+
+        const toast = new bootstrap.Toast(toastEl);
+        toast.show();
+      }
+
+      // Инициализация на event listeners
+      function initEventListeners() {
+        // Търсене
+        document
+          .getElementById("productSearch")
+          .addEventListener("input", function () {
+            populateProductsTable(this.value);
+          });
+
+        document
+          .getElementById("clearSearch")
+          .addEventListener("click", function () {
+            document.getElementById("productSearch").value = "";
+            populateProductsTable("");
+          });
+
+        // Сортиране на колони
+        document.querySelectorAll(".sortable").forEach((header) => {
+          header.addEventListener("click", function () {
+            const column = this.getAttribute("data-column");
+
+            if (currentSort.column === column) {
+              currentSort.direction =
+                currentSort.direction === "asc" ? "desc" : "asc";
+            } else {
+              currentSort.column = column;
+              currentSort.direction = "asc";
+            }
+
+            populateProductsTable(
+              document.getElementById("productSearch").value
+            );
+          });
+        });
+
+        // Запазване на цена в модалния прозорец
+        document
+          .getElementById("savePriceBtn")
+          .addEventListener("click", saveCustomerPrice);
+
+        // Промяна на стойности в модалния прозорец
+        document
+          .getElementById("customPrice")
+          .addEventListener("input", updatePriceInfoInModal);
+        document
+          .getElementById("standardMarkup")
+          .addEventListener("change", function () {
+            const product = products.find((p) => p.id === currentProductId);
+            if (!product) return;
+
+            const markup = parseFloat(this.value);
+            const price = calculatePrice(product.basePrice, markup);
+
+            document.getElementById("customPrice").value =
+              markup > 0 ? price.toFixed(2) : "";
+            updatePriceInfoInModal();
+          });
+
+        // Избор на купувач в модалния прозорец
+        document
+          .getElementById("customerSelect")
+          .addEventListener("change", function () {
+            currentCustomerId = parseInt(this.value);
+            const customPrice =
+              customerPrices[currentProductId]?.[currentCustomerId];
+
+            if (customPrice) {
+              document.getElementById("customPrice").value =
+                customPrice.toFixed(2);
+
+              // Проверка дали цената съвпада със стандартна надценка
+              const product = products.find((p) => p.id === currentProductId);
+              if (product) {
+                let isStandardMarkup = false;
+                for (let markup of [0, 5, 10, 15, 20, 25]) {
+                  const calculatedPrice = calculatePrice(
+                    product.basePrice,
+                    markup
+                  );
+                  if (Math.abs(calculatedPrice - customPrice) < 0.01) {
+                    document.getElementById("standardMarkup").value = markup;
+                    isStandardMarkup = true;
+                    break;
+                  }
+                }
+
+                if (!isStandardMarkup) {
+                  document.getElementById("standardMarkup").value = "0";
+                }
+              }
+            } else {
+              document.getElementById("customPrice").value = "";
+              document.getElementById("standardMarkup").value = "0";
+            }
+
+            updatePriceInfoInModal();
+          });
+
+        // Добавяне на нов продукт
+        document
+          .getElementById("addProductBtn")
+          .addEventListener("click", function () {
+            const modal = new bootstrap.Modal(
+              document.getElementById("addProductModal")
+            );
+            modal.show();
+          });
+
+        document
+          .getElementById("confirmAddProduct")
+          .addEventListener("click", function () {
+            const name = document.getElementById("productName").value;
+            const basePrice = parseFloat(
+              document.getElementById("productBasePrice").value
+            );
+            const description =
+              document.getElementById("productDescription").value;
+
+            if (!name || isNaN(basePrice)) {
+              alert("Моля, попълнете всички задължителни полета!");
+              return;
+            }
+
+            const newProduct = {
+              id: Math.max(...products.map((p) => p.id)) + 1,
+              name,
+              basePrice,
+              description,
+            };
+
+            products.push(newProduct);
+            showToast(`Продукт "${name}" е добавен успешно!`);
+
+            // Затваряне на модалния прозорец и нулиране на формата
+            const modal = bootstrap.Modal.getInstance(
+              document.getElementById("addProductModal")
+            );
+            modal.hide();
+            document.getElementById("addProductForm").reset();
+
+            // Актуализиране на таблицата
+            populateProductsTable();
+          });
+
+        // Превключване на темата
+        document
+          .getElementById("themeToggle")
+          .addEventListener("click", toggleTheme);
+
+        // Помощ
+        document
+          .getElementById("helpBtn")
+          .addEventListener("click", function () {
+            alert(
+              "Добре дошли в системата за управление на цени!\n\n" +
+                '1. Изберете "Продукти" за да видите списък с всички продукти и техните цени\n' +
+                '2. Кликнете на "Цени" за да управлявате цени за отделни купувачи\n' +
+                "3. Използвайте бързите бутони за прилагане на стандартни надценки\n" +
+                '4. В раздела "Купувачи" можете да управлявате списъка с купувачи\n' +
+                '5. В раздела "Отчети" можете да видите анализи за цените'
+            );
+          });
+
+        // Клавишни комбинации
+        document.addEventListener("keydown", function (e) {
+          if (e.ctrlKey && e.key === "f") {
+            e.preventDefault();
+            document.getElementById("productSearch").focus();
+          }
+        });
+      }
+
+      // Превключване между светла и тъмна тема
+      function toggleTheme() {
+        document.body.classList.toggle("dark-theme");
+        localStorage.setItem(
+          "theme",
+          document.body.classList.contains("dark-theme") ? "dark" : "light"
+        );
+
+        const themeBtn = document.getElementById("themeToggle");
+        if (document.body.classList.contains("dark-theme")) {
+          themeBtn.innerHTML = '<i class="bi bi-sun-fill"></i> Светла тема';
+        } else {
+          themeBtn.innerHTML = '<i class="bi bi-moon-fill"></i> Тъмна тема';
+        }
+      }
+
+      // Зареждане на предпочитаната тема от localStorage
+      function loadThemePreference() {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "dark") {
+          document.body.classList.add("dark-theme");
+          document.getElementById("themeToggle").innerHTML =
+            '<i class="bi bi-sun-fill"></i> Светла тема';
+        }
+      }
+    </script>
+  </body>
+</html>
